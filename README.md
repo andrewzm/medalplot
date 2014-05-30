@@ -3,6 +3,7 @@ medalplot
 Purpose:	An R-Software package for visualising uncertainty in large-scale Gaussian systems. 
 
 Usage:	To install in R, first load Hadley Wickham's devtools and then in console type
+	
 	install_git("https://www.github.com/andrewzm/medalplot",build_vignettes=F)
 
 Contact:	Andrew Zammit-Mangion and Jonathan C. Rougier
