@@ -7,7 +7,7 @@ Usage:	To install in R, first load Hadley Wickham's devtools and then in console
 	
 	install_git("https://www.github.com/andrewzm/medalplot",build_vignettes=F)
 
-Contact:	Andrew Zammit-Mangion and Jonathan C. Rougier
+Contact:	Jonathan C. Rougier and Andrew Zammit-Mangion
 
 Date:	31/05/2014
 
