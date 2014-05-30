@@ -65,16 +65,16 @@ medalplot <- function(Q,Qo,A,subset=1L:nrow(A),Sigma_part=NULL,xsamp=NULL) {
   Asub <- A[subset,]
   Qosub <- Qo[subset,]
   
-  # Find the prior variance
+  ## Find the prior variance
   cholQ <- .Matrix_chol(Q)
   PP <- t(.cholsolve(t(Asub),cholQ$Lp,cholQ$P))  # A backsolve is a transposed forward solve ...
   V1 <- rowSums(PP * Asub)
   
-  # Find the update conditioned only on the ith observation
+  ## Find the update conditioned only on the ith observation
   Prior_prec_diag <- 1/diag(PP %*% t(Asub)) # Just take the diagonal elements
   V2 <- 1/(Prior_prec_diag + diag(Qosub))
                           
-  # Find the update based on all observations
+  ## Find the update based on all observations
   if (is.null(xsamp)) { # In this case we evaluate the partial matrix inverse
     if (is.null(Sigma_part)) {
       ## Do Takahashi
