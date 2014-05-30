@@ -1,10 +1,10 @@
 Package: medalplot
 Type: Package
-Title: Multi-variate ST modelling
+Title: Medal Plot
 Version: 1.0
 Date: 2014-01-06
 Authors: Andrew Zammit-Mangion, Jonathan Rougier
-Maintainer: Andrew Zammit-Mangion <andrewzm@gmail.com>
+Maintainer: Andrew Zammit-Mangion <andrewzm@gmail.com> and Jonathan C. Rougier <j.c.rougier@bristol.ac.uk>
 Description: A package for plotting "medal plots" in Gaussian models
 VignetteBuilder: knitr
 Depends:
