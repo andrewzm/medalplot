@@ -1,6 +1,7 @@
 medalplot
 =========
-Purpose:	An R-Software package for visualising uncertainty in large-scale Gaussian systems. 
+Purpose:	An R-Software package for visualising uncertainty in large-scale Gaussian systems. For details on how to use 		the package please refer to the package vignette in inst/doc and the paper on
+		http://www.maths.bris.ac.uk/~MAZJCR/rougierVLSGU.pdf
 
 Usage:	To install in R, first load Hadley Wickham's devtools and then in console type
 	
