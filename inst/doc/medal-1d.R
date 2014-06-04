@@ -1,9 +1,9 @@
 ## ----Matern--------------------------------------------------------------
 Matern <- function(r=0:100,nu=3/2,var=1,kappa=0.1) {
-  K <- var/((2^(nu-1))*gamma(nu))*
-        (kappa*abs(r))^nu*besselK(kappa*abs(r),nu=nu)
-  diag(K) = var
-  return(K)
+  r <- kappa * abs(r)
+  robj <- r^nu * besselK(r, nu = nu) / (2^(nu - 1) * gamma(nu))
+  robj[is.nan(robj)] <- 1
+  var * robj
 }
 
 ## ----init, fig.height=4--------------------------------------------------
@@ -22,7 +22,7 @@ Qo <- diag(1/sigmav^2) # Precision matrix
 ## ----A-------------------------------------------------------------------
 ny <- length(sy)
 A <- matrix(0,ny,n)
-for(i in 1:length(sy))   A[i,sy[i]] = 1
+A[cbind(seq(along = sy), sy)] <- 1
 
 ## ----medal---------------------------------------------------------------
 library(medalplot)
@@ -56,10 +56,11 @@ g_medals <- function(data,print_middle=T,alpha=1,scale=0.004,
   size_outer <-  (data$r1)
   size_inner <- (data$r3)
   size_middle <- (data$r2)
-  ## If white medal is big, show rim colour
-  if(show_rim) {
-    size_middle <- pmin(size_middle,0.9*size_outer)
-    size_inner <- pmin(size_inner,0.9*size_middle)
+  
+  if (show_rim) {
+    ## Enlarge outer rim
+    foo <- (size_outer - size_middle) / size_outer
+    size_outer <- ifelse(foo < 0.1, (1.1 - foo) * size_outer, size_outer)
   }
   
   ## If medals are too small scale them up
@@ -74,33 +75,34 @@ g_medals <- function(data,print_middle=T,alpha=1,scale=0.004,
   
   mobs <- nrow(M)
   
+  ## Plot outer medals
   for (i in 1:mobs) {
-    ## Plot outer medal
     g <- g + geom_polygon(data=.ellipseFun(c(data$x[i],data$y[i]),
                                            size_outer[i]*scale,
                                            npoints=100),
                           aes(x,y),fill=data$col_outer[i],alpha=alpha)
-    
-    ## Plot middle medal
-    if(print_middle)
+  }
+  ## Plot middle medals
+  if(print_middle) for (i in 1:mobs) {
       g <- g + geom_polygon(data=.ellipseFun(c(data$x[i],data$y[i]),
                                              size_middle[i]*scale,
                                              npoints=100),
                             aes(x,y),fill="white",alpha=alpha)
-    
-    ## Plot inner medal
+  }
+   
+  ## Plot inner medals
+  for (i in 1:mobs) {
     g <- g + geom_polygon(data=.ellipseFun(c(data$x[i],data$y[i]),
                                            size_inner[i]*scale,
                                            npoints=100),
                           aes(x,y),fill=data$col_inner[i])
-    
   }
   return(g)
 }
 
-## ----Qtot----------------------------------------------------------------
-Qtot <- t(A)%*%Qo%*%A + Q
-Sigma <- chol2inv(chol(Qtot))
+## ----Qstar---------------------------------------------------------------
+Qstar <- Qtot <- crossprod(chol(Qo) %*% A) + Q
+Sigma <- chol2inv(chol(Qstar))
 x_std <- sqrt(diag(Sigma))
 
 ## ----plot2,fig.height=4,fig.cap='Medals showing the relation between the prior, posterior and observation uncertainty and the effect of vicinity of the observations on each other. The blue bars denote the observation uncertainty, the red shading the prior uncertainty and the yellow shading the posterior uncertainty. For interpretation of the medals see main text.'----
@@ -147,10 +149,11 @@ g_medals <- function(data,print_middle=T,alpha=1,scale=0.004,
   size_outer <-  (data$r1)
   size_inner <- (data$r3)
   size_middle <- (data$r2)
-  ## If white medal is big, show rim colour
-  if(show_rim) {
-    size_middle <- pmin(size_middle,0.9*size_outer)
-    size_inner <- pmin(size_inner,0.9*size_middle)
+  
+  if (show_rim) {
+    ## Enlarge outer rim
+    foo <- (size_outer - size_middle) / size_outer
+    size_outer <- ifelse(foo < 0.1, (1.1 - foo) * size_outer, size_outer)
   }
   
   ## If medals are too small scale them up
@@ -165,26 +168,27 @@ g_medals <- function(data,print_middle=T,alpha=1,scale=0.004,
   
   mobs <- nrow(M)
   
+  ## Plot outer medals
   for (i in 1:mobs) {
-    ## Plot outer medal
     g <- g + geom_polygon(data=.ellipseFun(c(data$x[i],data$y[i]),
                                            size_outer[i]*scale,
                                            npoints=100),
                           aes(x,y),fill=data$col_outer[i],alpha=alpha)
-    
-    ## Plot middle medal
-    if(print_middle)
+  }
+  ## Plot middle medals
+  if(print_middle) for (i in 1:mobs) {
       g <- g + geom_polygon(data=.ellipseFun(c(data$x[i],data$y[i]),
                                              size_middle[i]*scale,
                                              npoints=100),
                             aes(x,y),fill="white",alpha=alpha)
-    
-    ## Plot inner medal
+  }
+   
+  ## Plot inner medals
+  for (i in 1:mobs) {
     g <- g + geom_polygon(data=.ellipseFun(c(data$x[i],data$y[i]),
                                            size_inner[i]*scale,
                                            npoints=100),
                           aes(x,y),fill=data$col_inner[i])
-    
   }
   return(g)
 }

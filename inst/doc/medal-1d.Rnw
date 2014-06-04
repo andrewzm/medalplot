@@ -57,16 +57,16 @@ This vignette presents the \emph{R-Software} package \texttt{medalplot}, and sho
 
 We will use the medal plot to study uncertainty in the case of a simple 1D Gaussian process, a random function fully defined by its expectation (which we take to be zero everywhere) and its covariance function. The function we will employ is the Mat{\'e}rn function 
 \begin{equation}\label{eq:Matern}
-k_1(r) = \frac{\sigma^2}{2^{\nu-1}\Gamma(\nu)}(\kappa r)K_{\nu}(\kappa r),
+k_1(r) = \frac{\sigma^2}{2^{\nu-1}\Gamma(\nu)}(\kappa r)^{\nu}K_{\nu}(\kappa r),
 \end{equation}
 \noindent where $\sigma^2$ is the marginal variance, $\kappa$ is the scaling parameter, $\nu$ is the smoothness parameter and $K_{\nu}$ is the modified Bessel function of the second kind. This function is implemented as follows:
 
 <<Matern>>=
 Matern <- function(r=0:100,nu=3/2,var=1,kappa=0.1) {
-  K <- var/((2^(nu-1))*gamma(nu))*
-        (kappa*abs(r))^nu*besselK(kappa*abs(r),nu=nu)
-  diag(K) = var
-  return(K)
+  r <- kappa * abs(r)
+  robj <- r^nu * besselK(r, nu = nu) / (2^(nu - 1) * gamma(nu))
+  robj[is.nan(robj)] <- 1
+  var * robj
 }
 @
 
@@ -105,7 +105,7 @@ Qo <- diag(1/sigmav^2) # Precision matrix
 <<A>>=
 ny <- length(sy)
 A <- matrix(0,ny,n)
-for(i in 1:length(sy))   A[i,sy[i]] = 1
+A[cbind(seq(along = sy), sy)] <- 1
 @
 
 Now we have all the elements in place to run the medal plot function. In this example we are going to generate a medal for each observation location (simply by leaving the \texttt{subset} argument empty). The function call, following loading of the library, is as follows
@@ -157,10 +157,11 @@ g_medals <- function(data,print_middle=T,alpha=1,scale=0.004,
   size_outer <-  (data$r1)
   size_inner <- (data$r3)
   size_middle <- (data$r2)
-  ## If white medal is big, show rim colour
-  if(show_rim) {
-    size_middle <- pmin(size_middle,0.9*size_outer)
-    size_inner <- pmin(size_inner,0.9*size_middle)
+  
+  if (show_rim) {
+    ## Enlarge outer rim
+    foo <- (size_outer - size_middle) / size_outer
+    size_outer <- ifelse(foo < 0.1, (1.1 - foo) * size_outer, size_outer)
   }
   
   ## If medals are too small scale them up
@@ -175,26 +176,27 @@ g_medals <- function(data,print_middle=T,alpha=1,scale=0.004,
   
   mobs <- nrow(M)
   
+  ## Plot outer medals
   for (i in 1:mobs) {
-    ## Plot outer medal
     g <- g + geom_polygon(data=.ellipseFun(c(data$x[i],data$y[i]),
                                            size_outer[i]*scale,
                                            npoints=100),
                           aes(x,y),fill=data$col_outer[i],alpha=alpha)
-    
-    ## Plot middle medal
-    if(print_middle)
+  }
+  ## Plot middle medals
+  if(print_middle) for (i in 1:mobs) {
       g <- g + geom_polygon(data=.ellipseFun(c(data$x[i],data$y[i]),
                                              size_middle[i]*scale,
                                              npoints=100),
                             aes(x,y),fill="white",alpha=alpha)
-    
-    ## Plot inner medal
+  }
+   
+  ## Plot inner medals
+  for (i in 1:mobs) {
     g <- g + geom_polygon(data=.ellipseFun(c(data$x[i],data$y[i]),
                                            size_inner[i]*scale,
                                            npoints=100),
                           aes(x,y),fill=data$col_inner[i])
-    
   }
   return(g)
 }
@@ -208,9 +210,9 @@ In addition, to further interpret the medals, we will also plot the posterior va
 
 \noindent implemented as 
 
-<<Qtot>>=
-Qtot <- t(A)%*%Qo%*%A + Q
-Sigma <- chol2inv(chol(Qtot))
+<<Qstar>>=
+Qstar <- Qtot <- crossprod(chol(Qo) %*% A) + Q
+Sigma <- chol2inv(chol(Qstar))
 x_std <- sqrt(diag(Sigma))
 @
 
