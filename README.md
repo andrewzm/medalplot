@@ -5,7 +5,7 @@ Purpose:	An R-Software package for visualising uncertainty in large-scale Gaussi
 
 Usage:	To install in R, first load Hadley Wickham's devtools and then in console type
 	
-	install_git("https://www.github.com/andrewzm/medalplot",build_vignettes=F)
+	install_github("andrewzm/medalplot",build_vignettes=F)
 
 Contact:	Jonathan C. Rougier and Andrew Zammit-Mangion
 
