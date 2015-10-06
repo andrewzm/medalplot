@@ -1,0 +1,97 @@
+---
+title: "Medal plot 1D - paper version"
+author: "Andrew Zammit Mangion"
+date: "6 October 2015"
+output: html_document
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Medal plots for a 1D Gaussian process, paper version}
+---
+
+This example is identical to the vignette \code{medal-1d} however adjusted for publication. The separate plotting steps are clearly illustrated below.
+
+```{r,fig.keep='all'}
+#### toy example
+
+library(medalplot)
+
+## copying the vignette and the example in ?medalplot
+
+## but I'll write my own nu = 5/2 Matern function
+
+Matern <- function(r, ell = 1) {
+  r <- r / ell
+  (1 + r * (sqrt(5) + r * (5/3))) * exp(-sqrt(5) * r)
+}
+
+n <- 100L
+s <- 1L:n
+
+## set correlation length to 30
+
+ell <- uniroot(function(ell) Matern(30, ell) - 0.05, interval = c(1, 20))$root
+print(c(root = ell))
+
+V <- 2^2 * Matern(as.matrix(dist(s)), ell = ell) # set sd = 2
+Q <- chol2inv(chol(V))
+
+sy <- c(6, 10, 14, 18, 22, 26, 30, 34, 55, 85, 90, 95)
+sigmav <- c(1.6, 1.6, 1.6, 1.6, 1.6, 0.8, 1.6, 1.6, 1.6, 2.05, 2.05, 2.05)
+
+Qo <- diag(1 / sigmav^2)
+ny <- length(sy)
+A <- matrix(0, ny, n)
+A[cbind(1L:ny, sy)] <- 1
+Qstar <- crossprod(chol(Qo) %*% A) + Q
+Vstar <- chol2inv(chol(Qstar))
+
+M <- medalplot(Q = Q, Qo = Qo, A = A)
+
+## and now draw the picture
+
+#if (!exists("op")) op <- par(no.readonly = TRUE)
+#graphics.off()
+
+#dev.new(width = 6, height = 4)
+
+#par(op)
+par(mar = c(3, 2, 0.1, 6), mgp = c(1.7, 0.7, 0), cex = 0.8, lwd = 2, las = 1)
+
+plot.new()
+plot.window(xlim = range(s), ylim = c(0, 3))
+
+dx <- 2
+left <- sy - dx / 2
+grey <- "grey50"
+rect(left, rep(0, ny), left + dx, sigmav, col = grey,
+  border = NA)
+axis(1, pos = 0)
+axis(2, pretty(c(0, 2.5)), pos = 0)
+title(xlab = "1D domain")
+
+lines(s, y1 <- sqrt(diag(V)), lty = 2)
+lines(s, y2 <- sqrt(diag(Vstar)), lty = 1)
+text(c(n, n, sy[ny]), c(y1[n], y2[n], y2[n] / 2),
+  c("Prior std dev", "Posterior std dev", "Obs err std dev"),
+  pos = 4, col = "black", xpd = NA)
+
+## add the medals
+
+M$col_outer <- as.character(M$col_outer)
+M$col_inner <- as.character(M$col_inner)
+
+sc <- 2.75
+y <- 2.75
+symbols(x = sy, y = rep(y, ny), circles = sc * M$r1, inches = FALSE,
+  fg = M$col_outer, bg = M$col_outer, add = TRUE)
+symbols(x = sy, y = rep(y, ny), circles = sc * M$r2, inches = FALSE,
+  fg = "white", bg = "white", add = TRUE)
+symbols(x = sy, y = rep(y, ny), circles = sc * M$r3, inches = FALSE,
+  fg = M$col_inner, bg = M$col_inner, add = TRUE)
+
+## the little guy needs a hand
+
+i <- which.min(sigmav)
+symbols(x = sy[i], y = rep(y, ny)[i], circles = sc * M$r1[i], inches = FALSE,
+  fg = M$col_outer[i], bg = NA, add = TRUE)
+```
